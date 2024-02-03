@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>CS 425 Assignment 0</title>
@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="assignment0.js" type=""></script>
 </head>
+
 <body>
     <canvas id="canvas"></canvas>
     <div id="config">
@@ -26,13 +27,15 @@
             </tr>
             <tr>
                 <td><label for="triangles">Triangles</label></td>
-                <td><input id="triangles" type="range" min="0" max="100" value="0" oninput="window.updateTriangles()"></td>
+                <td><input id="triangles" type="range" min="0" max="0" value="0" onchange="updateTriangles()">
+                </td>
             </tr>
         </table>
         <label for="jsonFile">JSON Input File</label> <br>
         <input id="jsonFile" type="file" name="jsonFile" accept=".json" /> <br>
-        <input type="checkbox" id="jsonMode" name="jsonMode" oninput="window.checkBox()" />
+        <input type="checkbox" id="jsonMode" name="jsonMode" oninput="window.checkBox()" checked />
         <label for="jsonMode">JSON Color Mode?</label>
     </div>
 </body>
+
 </html>
