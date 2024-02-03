@@ -13,12 +13,22 @@ const fragmentShaderSrc =
     "precision highp float;\n" +
     "in vec4 vColor;\n" +
     "out vec4 outColor;\n" +
-
     "void main() {\n" +
     "   outColor = vColor;\n" +
     "}\n";
 
-let gl, vao, program1, program2, currColor, currTri, maxTri, positions, colors;
+const fragmentShaderSrc2 =
+    "#version 300 es\n" +
+    "precision highp float;\n" +
+    "in vec4 vColor;\n" +
+    "out vec4 outColor;\n" +
+    "uniform vec4 uColor;\n" +
+    "void main() {\n" +
+    "   outColor = uColor;\n" +
+    "}\n";
+
+let gl, vao, program1, program2, currColor, currTri,
+    maxTri, positions, colors, uniformLoc, fileLoad;
 
 window.updateTriangles = function () {
     currTri = parseInt(document.querySelector("#triangles").value);
@@ -56,14 +66,12 @@ function uploadFile(event) {
                     positions = jsonData.positions;
                     colors = jsonData.colors;
 
-                    // You can perform further processing with the data
-                    maxTri = positions.length / 9;
+                    maxTri = positions.length / 3;
                     document.getElementById("triangles").max = maxTri;
 
                     // create programs
                     createPrograms();
-                    // draw
-                    window.requestAnimationFrame(draw);
+                    fileLoad = true;
                 } else {
                     alert("Invalid JSON format. Missing 'positions' or 'colors'.");
                 }
@@ -73,7 +81,7 @@ function uploadFile(event) {
         };
         reader.readAsText(selectedFile);
     } else {
-        console.log("No file selected");
+        console.log("No file selected?");
     }
 }
 
@@ -81,13 +89,16 @@ async function createPrograms() {
     // create vertex and fragment shaders, create programs
     var vertexShader = createShader(vertexShaderSrc, gl.VERTEX_SHADER);
     var fragmentShader = createShader(fragmentShaderSrc, gl.FRAGMENT_SHADER);
+    var fragmentShader2 = createShader(fragmentShaderSrc2, gl.FRAGMENT_SHADER);
 
     program1 = createProgram(vertexShader, fragmentShader);
+    program2 = createProgram(vertexShader, fragmentShader2);
 
     var posBuffer = createBuffer(positions);
     var colorBuffer = createBuffer(colors);
     var posAttribLoc = gl.getAttribLocation(program1, "position");
     var colorAttribLoc = gl.getAttribLocation(program1, "color");
+    uniformLoc = gl.getUniformLocation(program2, 'uColor');
 
     vao = createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer);
 }
@@ -137,7 +148,7 @@ function createVAO(posAttribLoc, colAttribLoc, posBuffer, colBuffer) {
 
     gl.enableVertexAttribArray(posAttribLoc);
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-    gl.vertexAttribPointer(posAttribLoc, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(posAttribLoc, 3, gl.FLOAT, false, 0, 0);
 
     gl.enableVertexAttribArray(colAttribLoc);
     gl.bindBuffer(gl.ARRAY_BUFFER, colBuffer);
@@ -151,22 +162,31 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // bind vao
-    gl.bindVertexArray(vao);
-    // use program
-    gl.useProgram(program1);
-    // draw arrays
-    gl.drawArraysInstanced(gl.TRIANGLES, 0, 3, currTri);
+    if (fileLoad) {
+        // use program
+        if (useJSON) {
+            gl.useProgram(program1);
+        } else {
+            gl.useProgram(program2);
+            gl.uniform4fv(uniformLoc, new Float32Array(currColor));
+        }
+
+        // bind vao
+        gl.bindVertexArray(vao);
+        // draw arrays
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, currTri, 3);
+    }
 
     requestAnimationFrame(draw);
 };
 
 async function initialize() {
     // Setup global vars
-    currColor = [1.0, 1.0, 1.0, 1.0];
+    currColor = [0.0, 0.0, 0.0, 1.0];
     currTri = 0;
     maxTri = 0;
     useJSON = true;
+    fileLoad = false;
 
     // initialive canvas
     var canvas = document.querySelector("#canvas");
@@ -179,6 +199,9 @@ async function initialize() {
     document.getElementById('jsonFile').addEventListener('input', function (event) {
         uploadFile(event);
     });
+
+    // draw
+    window.requestAnimationFrame(draw);
 };
 
 window.onload = initialize;
